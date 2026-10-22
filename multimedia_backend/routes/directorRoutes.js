@@ -1,23 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.json({ message: 'lista de directores de cine' });
-});
+// controlador
+const directorController = require('../controllers/directorController');
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Ingreso de director de cine' });
-});
+router.get('/', directorController.getAllDirectors);
+
+router.post('/', directorController.insertDirector);
 
 router.route('/:id')
-  .get((req, res) => {
-    res.json({ message: 'Consultar director de cine' });
-  })
-  .put((req, res) => {
-    res.json({ message: 'Actualización de director de cine' });
-  })
-  .delete((req, res) => {
-    res.json({ message: 'Eliminación de director de cine' });
-  });
+  .get(directorController.getDirectorById)
+  .put(directorController.updateDirector)
+  .delete(directorController.deleteDirector);
 
 module.exports = router;    

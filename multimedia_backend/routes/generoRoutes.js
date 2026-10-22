@@ -1,23 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.json({ message: 'lista de generos' });
-});
+// controlador
+const generoController = require('../controllers/generoController');
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Ingreso de genero' });
-});
+router.get('/', generoController.getAllGeneros);
+
+router.post('/', generoController.insertGenero);
 
 router.route('/:id')
-  .get((req, res) => {
-    res.json({ message: 'Consultar genero' });
-  })
-  .put((req, res) => {
-    res.json({ message: 'Actualización de genero' });
-  })
-  .delete((req, res) => {
-    res.json({ message: 'Eliminación de genero' });
-  });
+  .get(generoController.getGeneroById)
+  .put(generoController.updateGenero)
+  .delete(generoController.deleteGenero);
 
 module.exports = router;    

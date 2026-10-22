@@ -1,23 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.json({ message: 'lista de tipos' });
-});
+//controlador
+const tipoController = require('../controllers/tipoController');
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Ingreso de tipo' });
-});
+router.get('/', tipoController.getAllTipos);
+
+router.post('/', tipoController.insertTipo);
 
 router.route('/:id')
-  .get((req, res) => {
-    res.json({ message: 'Consultar tipo' });
-  })
-  .put((req, res) => {
-    res.json({ message: 'Actualización de tipo' });
-  })
-  .delete((req, res) => {
-    res.json({ message: 'Eliminación de tipo' });
-  });
+  .get(tipoController.getTipoById)
+  .put(tipoController.updateTipo)
+  .delete(tipoController.deleteTipo);
 
 module.exports = router;    

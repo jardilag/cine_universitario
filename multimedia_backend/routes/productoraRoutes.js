@@ -1,23 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.json({ message: 'lista de productoras' });
-});
+//controlador
+const productoraController = require('../controllers/productoraController');
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Ingreso de productora' });
-});
+router.get('/', productoraController.getAllProductoras);
+
+router.post('/', productoraController.insertProductora);
+
 
 router.route('/:id')
-  .get((req, res) => {
-    res.json({ message: 'Consultar productora' });
-  })
-  .put((req, res) => {
-    res.json({ message: 'Actualización de productora' });
-  })
-  .delete((req, res) => {
-    res.json({ message: 'Eliminación de productora' });
-  });
+  .get(productoraController.getProductoraById)
+  .put(productoraController.updateProductora)
+  .delete(productoraController.deleteProductora);
 
 module.exports = router;    
