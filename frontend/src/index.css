@@ -1,0 +1,17 @@
+/* Estilos propios: Bootstrap hace casi todo, aquí solo ajustamos detalles. */
+body {
+  background-color: #f4f6f9;
+}
+
+.portada-card {
+  height: 320px;
+  object-fit: cover;
+  background-color: #dee2e6;
+}
+
+.sinopsis-corta {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
