@@ -14,7 +14,7 @@ import {
 //  - ruta        : URL en el frontend (React Router)
 //  - servicio    : funciones que hablan con la API
 //  - idCampo     : nombre de la llave primaria que devuelve el backend
-//  - accion      : 'inactivar' (el backend solo cambia estado) o 'eliminar' (borra el registro)
+//  - accion      : 'inactivar' -> "eliminar" nunca borra: el backend solo cambia el estado a Inactivo
 //  - campos      : campos del formulario (tipo, si es obligatorio y longitud máxima)
 //  - columnas    : columnas que se muestran en la tabla
 export const modulos = {
@@ -87,14 +87,16 @@ export const modulos = {
     ruta: '/tipos',
     servicio: tipoService,
     idCampo: 'id_tipo',
-    accion: 'eliminar', // la tabla tipo no tiene estado, el backend lo borra físicamente
+    accion: 'inactivar',
     campos: [
       { nombre: 'nombre', etiqueta: 'Nombre', tipo: 'text', requerido: true, max: 80 },
       { nombre: 'descripcion', etiqueta: 'Descripción', tipo: 'textarea' },
+      { nombre: 'estado', etiqueta: 'Estado', tipo: 'estado' },
     ],
     columnas: [
       { campo: 'nombre', titulo: 'Nombre' },
       { campo: 'descripcion', titulo: 'Descripción' },
+      { campo: 'estado', titulo: 'Estado', tipo: 'estado' },
       { campo: 'fecha_actualizacion', titulo: 'Actualizado', tipo: 'fecha' },
     ],
   },

@@ -8,7 +8,7 @@ function validarDatos(datos, actualizar = false) {
   if (!datos || typeof datos !== 'object' || Array.isArray(datos)) return 'Debes enviar un objeto JSON';
   if (Object.keys(datos).length === 0) return 'Debes enviar datos';
   if (actualizar && datos.serial !== undefined) return 'El serial no se puede modificar';
-  if (actualizar && !['titulo', 'sinopsis', 'url', 'portada', 'anio_estreno', 'id_genero', 'id_director', 'id_productora', 'id_tipo'].some(campo => datos[campo] !== undefined)) {
+  if (actualizar && !['titulo', 'sinopsis', 'url', 'portada', 'estado', 'anio_estreno', 'id_genero', 'id_director', 'id_productora', 'id_tipo'].some(campo => datos[campo] !== undefined)) {
     return 'Debes enviar un campo modificable';
   }
   if (!actualizar) {
@@ -27,6 +27,9 @@ function validarDatos(datos, actualizar = false) {
   }
   if (datos.portada != null && (typeof datos.portada !== 'string' || datos.portada.length > 2048)) {
     return 'portada debe ser texto de hasta 2048 caracteres';
+  }
+  if (datos.estado !== undefined && datos.estado !== 'Activo' && datos.estado !== 'Inactivo') {
+    return 'El estado debe ser Activo o Inactivo';
   }
   if ((!actualizar || datos.anio_estreno !== undefined) &&
       (!Number.isInteger(datos.anio_estreno) || (datos.anio_estreno !== 0 && (datos.anio_estreno < 1901 || datos.anio_estreno > 2155)))) {
@@ -75,7 +78,7 @@ class MediaController {
     const validacion = validarDatos(datos);
     if (validacion) return res.status(400).json({ message: validacion });
     Media.crear(
-      datos.serial.trim(), datos.titulo.trim(), datos.sinopsis.trim(), datos.url.trim(), datos.portada ?? null, datos.anio_estreno, datos.id_genero, datos.id_director, datos.id_productora, datos.id_tipo,
+      datos.serial.trim(), datos.titulo.trim(), datos.sinopsis.trim(), datos.url.trim(), datos.portada ?? null, datos.estado ?? 'Activo', datos.anio_estreno, datos.id_genero, datos.id_director, datos.id_productora, datos.id_tipo,
       (error, results) => {
         if (error) return manejarError(res, error);
         return res.status(201).json({ message: 'Registro creado correctamente', serial: datos.serial.trim() });
@@ -97,13 +100,14 @@ class MediaController {
       const sinopsis = datos.sinopsis === undefined ? actual.sinopsis : datos.sinopsis.trim();
       const url = datos.url === undefined ? actual.url : datos.url.trim();
       const portada = datos.portada === undefined ? actual.portada : datos.portada;
+      const estado = datos.estado === undefined ? actual.estado : datos.estado;
       const anio_estreno = datos.anio_estreno === undefined ? actual.anio_estreno : datos.anio_estreno;
       const id_genero = datos.id_genero === undefined ? actual.id_genero : datos.id_genero;
       const id_director = datos.id_director === undefined ? actual.id_director : datos.id_director;
       const id_productora = datos.id_productora === undefined ? actual.id_productora : datos.id_productora;
       const id_tipo = datos.id_tipo === undefined ? actual.id_tipo : datos.id_tipo;
       Media.actualizar(
-        id, titulo, sinopsis, url, portada, anio_estreno, id_genero, id_director, id_productora, id_tipo,
+        id, titulo, sinopsis, url, portada, estado, anio_estreno, id_genero, id_director, id_productora, id_tipo,
         (error, resultado) => {
           if (error) return manejarError(res, error);
           if (resultado.affectedRows === 0) return res.status(404).json({ message: 'No existe el registro de multimedia' });
@@ -116,10 +120,13 @@ class MediaController {
   deleteMedia(req, res) {
     const { id } = req.params;
     if (!idValido(id)) return res.status(400).json({ message: 'Serial inválido' });
-    Media.eliminar(id, (error, results) => {
+    Media.obtenerPorId(id, (error, results) => {
       if (error) return manejarError(res, error);
-      if (results.affectedRows === 0) return res.status(404).json({ message: 'No existe el registro de multimedia' });
-      return res.status(200).json({ message: 'Registro eliminado correctamente', serial: id });
+      if (results.length === 0) return res.status(404).json({ message: 'No existe el registro de multimedia' });
+      Media.inactivar(id, (error) => {
+        if (error) return manejarError(res, error);
+        return res.status(200).json({ message: 'Registro inactivado correctamente', serial: id, estado: 'Inactivo' });
+      });
     });
   }
 }

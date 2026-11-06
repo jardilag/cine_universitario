@@ -7,7 +7,7 @@ function idValido(id) {
 function validarDatos(datos, actualizar = false) {
   if (!datos || typeof datos !== 'object' || Array.isArray(datos)) return 'Debes enviar un objeto JSON';
   if (Object.keys(datos).length === 0) return 'Debes enviar datos';
-  if (actualizar && !['nombre', 'descripcion'].some(campo => datos[campo] !== undefined)) {
+  if (actualizar && !['nombre', 'estado', 'descripcion'].some(campo => datos[campo] !== undefined)) {
     return 'Debes enviar un campo modificable';
   }
   if ((!actualizar || datos.nombre !== undefined) && (typeof datos.nombre !== 'string' || !datos.nombre.trim() || datos.nombre.trim().length > 80)) {
@@ -16,15 +16,15 @@ function validarDatos(datos, actualizar = false) {
   if (datos.descripcion != null && (typeof datos.descripcion !== 'string')) {
     return 'descripcion debe ser texto';
   }
+  if (datos.estado !== undefined && datos.estado !== 'Activo' && datos.estado !== 'Inactivo') {
+    return 'El estado debe ser Activo o Inactivo';
+  }
   return null;
 }
 
 function manejarError(res, error) {
   if (error.code === 'ER_DUP_ENTRY') {
     return res.status(409).json({ message: 'Ya existe un registro con esos datos' });
-  }
-  if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-    return res.status(409).json({ message: 'No se puede eliminar un tipo asociado a multimedia' });
   }
   console.error('Error de MySQL:', error);
   return res.status(500).json({ message: 'Error interno de base de datos' });
@@ -53,7 +53,7 @@ class TipoController {
     const validacion = validarDatos(datos);
     if (validacion) return res.status(400).json({ message: validacion });
     Tipo.crear(
-      datos.nombre.trim(), datos.descripcion ?? null,
+      datos.nombre.trim(), datos.estado ?? 'Activo', datos.descripcion ?? null,
       (error, results) => {
         if (error) return manejarError(res, error);
         return res.status(201).json({ message: 'Registro creado correctamente', id_tipo: results.insertId });
@@ -72,9 +72,10 @@ class TipoController {
       if (results.length === 0) return res.status(404).json({ message: 'No existe el registro de tipo' });
       const actual = results[0];
       const nombre = datos.nombre === undefined ? actual.nombre : datos.nombre.trim();
+      const estado = datos.estado === undefined ? actual.estado : datos.estado;
       const descripcion = datos.descripcion === undefined ? actual.descripcion : datos.descripcion;
       Tipo.actualizar(
-        id, nombre, descripcion,
+        id, nombre, estado, descripcion,
         (error, resultado) => {
           if (error) return manejarError(res, error);
           if (resultado.affectedRows === 0) return res.status(404).json({ message: 'No existe el registro de tipo' });
@@ -87,10 +88,13 @@ class TipoController {
   deleteTipo(req, res) {
     const { id } = req.params;
     if (!idValido(id)) return res.status(400).json({ message: 'ID inválido' });
-    Tipo.eliminar(id, (error, results) => {
+    Tipo.obtenerPorId(id, (error, results) => {
       if (error) return manejarError(res, error);
-      if (results.affectedRows === 0) return res.status(404).json({ message: 'No existe el registro de tipo' });
-      return res.status(200).json({ message: 'Registro eliminado correctamente', id_tipo: Number(id) });
+      if (results.length === 0) return res.status(404).json({ message: 'No existe el registro de tipo' });
+      Tipo.inactivar(id, (error) => {
+        if (error) return manejarError(res, error);
+        return res.status(200).json({ message: 'Registro inactivado correctamente', id_tipo: Number(id), estado: 'Inactivo' });
+      });
     });
   }
 }

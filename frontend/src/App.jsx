@@ -1,10 +1,10 @@
 import React from 'react';
-import { Route, Switch, Link } from 'react-router-dom';
+import { Route, Switch, Link, Redirect } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import RutaAdmin from './components/RutaAdmin';
 import CatalogoLista from './components/CatalogoLista';
 import CatalogoFormulario from './components/CatalogoFormulario';
 import Inicio from './pages/Inicio';
-import MediaLista from './pages/MediaLista';
 import MediaFormulario from './pages/MediaFormulario';
 import { modulos } from './config/modulos';
 
@@ -16,25 +16,31 @@ export default function App() {
       <Navbar />
       <main className="container py-4">
         <Switch>
+          {/* Página principal PÚBLICA: muestra las películas y series (solo lectura). */}
           <Route exact path="/" component={Inicio} />
+          <Redirect exact from="/media" to="/" />
 
-          {/* Media: listado, crear y editar. "nuevo" va antes de "editar/:id". */}
-          <Route exact path="/media" component={MediaLista} />
-          <Route exact path="/media/nuevo" component={MediaFormulario} />
-          <Route exact path="/media/editar/:id" component={MediaFormulario} />
+          {/* Todo lo siguiente es SOLO para el modo administrador (RutaAdmin).
+              "nuevo" va antes de "editar/:id". */}
+          <RutaAdmin exact path="/media/nuevo">
+            <MediaFormulario />
+          </RutaAdmin>
+          <RutaAdmin exact path="/media/editar/:id">
+            <MediaFormulario />
+          </RutaAdmin>
 
           {/* Para cada módulo catálogo generamos sus 3 rutas con el mismo par de componentes.
               "key" fuerza a React a reiniciar el componente al cambiar de módulo. */}
           {Object.values(modulos).flatMap((m) => [
-            <Route key={`${m.clave}-lista`} exact path={m.ruta}>
+            <RutaAdmin key={`${m.clave}-lista`} exact path={m.ruta}>
               <CatalogoLista modulo={m} />
-            </Route>,
-            <Route key={`${m.clave}-nuevo`} exact path={`${m.ruta}/nuevo`}>
+            </RutaAdmin>,
+            <RutaAdmin key={`${m.clave}-nuevo`} exact path={`${m.ruta}/nuevo`}>
               <CatalogoFormulario modulo={m} />
-            </Route>,
-            <Route key={`${m.clave}-editar`} exact path={`${m.ruta}/editar/:id`}>
+            </RutaAdmin>,
+            <RutaAdmin key={`${m.clave}-editar`} exact path={`${m.ruta}/editar/:id`}>
               <CatalogoFormulario modulo={m} />
-            </Route>,
+            </RutaAdmin>,
           ])}
 
           {/* Ruta sin "path": atrapa cualquier URL desconocida (error 404). */}

@@ -8,13 +8,17 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './index.css';
 
 import App from './App.jsx';
+import { AdminProvider } from './context/AdminContext.jsx';
 
 // Punto de entrada: monta <App /> en el <div id="root"> de index.html.
-// BrowserRouter habilita la navegación por URL (React Router) en toda la aplicación.
+// - BrowserRouter habilita la navegación por URL (React Router) en toda la aplicación.
+// - AdminProvider comparte el estado "modo administrador" con todos los componentes.
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <AdminProvider>
+        <App />
+      </AdminProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

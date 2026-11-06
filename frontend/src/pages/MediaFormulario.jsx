@@ -16,6 +16,7 @@ const vacio = {
   sinopsis: '',
   url: '',
   portada: '',
+  estado: 'Activo',
   anio_estreno: '',
   id_genero: '',
   id_director: '',
@@ -57,6 +58,7 @@ export default function MediaFormulario() {
             sinopsis: m.sinopsis,
             url: m.url,
             portada: m.portada ?? '',
+            estado: m.estado,
             anio_estreno: m.anio_estreno,
             id_genero: m.id_genero,
             id_director: m.id_director,
@@ -66,7 +68,7 @@ export default function MediaFormulario() {
         }
       } catch (error) {
         alertaError(mensajeDeError(error));
-        history.replace('/media');
+        history.replace('/');
       } finally {
         setCargando(false);
       }
@@ -102,6 +104,7 @@ export default function MediaFormulario() {
       sinopsis: datos.sinopsis.trim(),
       url: datos.url.trim(),
       portada: datos.portada.trim() || null,
+      estado: datos.estado,
       anio_estreno: anio,
       id_genero: Number(datos.id_genero),
       id_director: Number(datos.id_director),
@@ -116,7 +119,7 @@ export default function MediaFormulario() {
         ? await mediaService.actualizar(id, cuerpo)
         : await mediaService.crear({ serial: datos.serial.trim(), ...cuerpo });
       await alertaExito(respuesta.message);
-      history.push('/media');
+      history.push('/');
     } catch (error) {
       alertaError(mensajeDeError(error));
     } finally {
@@ -203,13 +206,21 @@ export default function MediaFormulario() {
                 {renderSelect('id_director', 'Director', catalogos.directores, 'id_director', 'nombres')}
                 {renderSelect('id_productora', 'Productora', catalogos.productoras, 'id_productora', 'nombre')}
                 {renderSelect('id_tipo', 'Tipo', catalogos.tipos, 'id_tipo', 'nombre')}
+
+                <div className="col-md-6">
+                  <label htmlFor="estado" className="form-label">Estado</label>
+                  <select id="estado" name="estado" className="form-select" value={datos.estado} onChange={manejarCambio}>
+                    <option value="Activo">Activo (visible en la página principal)</option>
+                    <option value="Inactivo">Inactivo (oculta para visitantes)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="d-flex gap-2 mt-4">
                 <button type="submit" className="btn btn-primary" disabled={guardando}>
                   {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
-                <button type="button" className="btn btn-outline-secondary" onClick={() => history.push('/media')}>
+                <button type="button" className="btn btn-outline-secondary" onClick={() => history.push('/')}>
                   Cancelar
                 </button>
               </div>
