@@ -12,8 +12,8 @@ function validarDatos(datos, actualizar = false) {
     return 'Debes enviar un campo modificable';
   }
   if (!actualizar) {
-    if ((typeof datos.serial !== 'string' || !datos.serial.trim() || datos.serial.trim().length > 50)) {
-      return 'serial es obligatorio y admite hasta 50 caracteres';
+    if (typeof datos.serial !== 'string' || !/^[A-Za-z0-9_-]{1,50}$/.test(datos.serial)) {
+      return 'El serial debe contener de 1 a 50 letras sin tilde, números, guiones o guiones bajos';
     }
   }
   if ((!actualizar || datos.titulo !== undefined) && (typeof datos.titulo !== 'string' || !datos.titulo.trim() || datos.titulo.trim().length > 200)) {
@@ -31,9 +31,10 @@ function validarDatos(datos, actualizar = false) {
   if (datos.estado !== undefined && datos.estado !== 'Activo' && datos.estado !== 'Inactivo') {
     return 'El estado debe ser Activo o Inactivo';
   }
+  const anioActual = new Date().getFullYear();
   if ((!actualizar || datos.anio_estreno !== undefined) &&
-      (!Number.isInteger(datos.anio_estreno) || (datos.anio_estreno !== 0 && (datos.anio_estreno < 1901 || datos.anio_estreno > 2155)))) {
-    return 'anio_estreno debe ser un entero entre 1901 y 2155, o 0';
+      (!Number.isInteger(datos.anio_estreno) || datos.anio_estreno < 1900 || datos.anio_estreno > anioActual)) {
+    return `El año de estreno debe ser un entero entre 1900 y ${anioActual}`;
   }
   for (const campo of ['id_genero', 'id_director', 'id_productora', 'id_tipo']) {
     if ((!actualizar || datos[campo] !== undefined) &&
@@ -64,7 +65,7 @@ class MediaController {
   }
 
   getMediaById(req, res) {
-    const { id } = req.params;
+    const id = req.params.id ?? req.query.serial;
     if (!idValido(id)) return res.status(400).json({ message: 'Serial inválido' });
     Media.obtenerPorId(id, (error, results) => {
       if (error) return manejarError(res, error);
@@ -78,16 +79,16 @@ class MediaController {
     const validacion = validarDatos(datos);
     if (validacion) return res.status(400).json({ message: validacion });
     Media.crear(
-      datos.serial.trim(), datos.titulo.trim(), datos.sinopsis.trim(), datos.url.trim(), datos.portada ?? null, datos.estado ?? 'Activo', datos.anio_estreno, datos.id_genero, datos.id_director, datos.id_productora, datos.id_tipo,
+      datos.serial, datos.titulo.trim(), datos.sinopsis.trim(), datos.url.trim(), datos.portada ?? null, datos.estado ?? 'Activo', datos.anio_estreno, datos.id_genero, datos.id_director, datos.id_productora, datos.id_tipo,
       (error, results) => {
         if (error) return manejarError(res, error);
-        return res.status(201).json({ message: 'Registro creado correctamente', serial: datos.serial.trim() });
+        return res.status(201).json({ message: 'Registro creado correctamente', serial: datos.serial });
       }
     );
   }
 
   updateMedia(req, res) {
-    const { id } = req.params;
+    const id = req.params.id ?? req.query.serial;
     if (!idValido(id)) return res.status(400).json({ message: 'Serial inválido' });
     const datos = req.body;
     const validacion = validarDatos(datos, true);
@@ -101,7 +102,7 @@ class MediaController {
       const url = datos.url === undefined ? actual.url : datos.url.trim();
       const portada = datos.portada === undefined ? actual.portada : datos.portada;
       const estado = datos.estado === undefined ? actual.estado : datos.estado;
-      const anio_estreno = datos.anio_estreno === undefined ? actual.anio_estreno : datos.anio_estreno;
+      const anio_estreno = datos.anio_estreno ?? null;
       const id_genero = datos.id_genero === undefined ? actual.id_genero : datos.id_genero;
       const id_director = datos.id_director === undefined ? actual.id_director : datos.id_director;
       const id_productora = datos.id_productora === undefined ? actual.id_productora : datos.id_productora;
@@ -118,7 +119,7 @@ class MediaController {
   }
 
   deleteMedia(req, res) {
-    const { id } = req.params;
+    const id = req.params.id ?? req.query.serial;
     if (!idValido(id)) return res.status(400).json({ message: 'Serial inválido' });
     Media.obtenerPorId(id, (error, results) => {
       if (error) return manejarError(res, error);

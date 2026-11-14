@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import Cargando from '../components/Cargando';
 import {
   directorService,
@@ -28,18 +28,27 @@ const vacio = {
 const opcionesDisponibles = (lista, idCampo, actual) =>
   lista.filter((x) => x.estado === undefined || x.estado === 'Activo' || String(x[idCampo]) === String(actual));
 
-export default function MediaFormulario() {
-  const { id } = useParams(); // en esta pantalla el id es el "serial" (texto)
+export default function MediaFormulario({ esEdicion = false }) {
+  const { id: serialRuta } = useParams();
+  const { search } = useLocation();
+  const id = serialRuta ?? new URLSearchParams(search).get('serial');
   const history = useHistory();
-  const esEdicion = Boolean(id);
+  const anioActual = new Date().getFullYear();
 
   const [datos, setDatos] = useState(vacio);
+  const [anioOriginal, setAnioOriginal] = useState('');
   const [catalogos, setCatalogos] = useState({ generos: [], directores: [], productoras: [], tipos: [] });
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const anioAnteriorInvalido = esEdicion && (Number(anioOriginal) < 1900 || Number(anioOriginal) > anioActual);
 
   // Al abrir: cargamos los 4 catálogos (para los <select>) y, si es edición, la producción.
   useEffect(() => {
+    if (esEdicion && !id) {
+      history.replace('/');
+      return;
+    }
+
     async function inicializar() {
       try {
         const [generos, directores, productoras, tipos] = await Promise.all([
@@ -52,6 +61,7 @@ export default function MediaFormulario() {
 
         if (esEdicion) {
           const m = await mediaService.obtener(id);
+          setAnioOriginal(String(m.anio_estreno));
           setDatos({
             serial: m.serial,
             titulo: m.titulo,
@@ -74,7 +84,7 @@ export default function MediaFormulario() {
       }
     }
     inicializar();
-  }, [id]);
+  }, [esEdicion, history, id]);
 
   function manejarCambio(e) {
     const { name, value } = e.target;
@@ -87,15 +97,19 @@ export default function MediaFormulario() {
     // Validaciones básicas en el cliente
     const obligatorios = [
       ['serial', 'Serial'], ['titulo', 'Título'], ['sinopsis', 'Sinopsis'], ['url', 'URL'],
-      ['anio_estreno', 'Año de estreno'], ['id_genero', 'Género'], ['id_director', 'Director'],
+      ['id_genero', 'Género'], ['id_director', 'Director'],
       ['id_productora', 'Productora'], ['id_tipo', 'Tipo'],
     ];
     for (const [campo, etiqueta] of obligatorios) {
       if (!String(datos[campo]).trim()) return alertaAdvertencia(`El campo "${etiqueta}" es obligatorio.`);
     }
+    if (!esEdicion && !/^[A-Za-z0-9_-]{1,50}$/.test(datos.serial)) {
+      return alertaAdvertencia('El serial debe contener de 1 a 50 letras sin tilde, números, guiones o guiones bajos.');
+    }
+    const enviarAnio = !esEdicion || String(datos.anio_estreno) !== anioOriginal;
     const anio = Number(datos.anio_estreno);
-    if (!Number.isInteger(anio) || anio < 1901 || anio > 2155) {
-      return alertaAdvertencia('El año de estreno debe estar entre 1901 y 2155.');
+    if (enviarAnio && (!Number.isInteger(anio) || anio < 1900 || anio > anioActual)) {
+      return alertaAdvertencia(`El año de estreno debe ser un entero entre 1900 y ${anioActual}.`);
     }
 
     // El backend espera números en el año y en los ids, por eso los convertimos con Number().
@@ -105,19 +119,18 @@ export default function MediaFormulario() {
       url: datos.url.trim(),
       portada: datos.portada.trim() || null,
       estado: datos.estado,
-      anio_estreno: anio,
       id_genero: Number(datos.id_genero),
       id_director: Number(datos.id_director),
       id_productora: Number(datos.id_productora),
       id_tipo: Number(datos.id_tipo),
     };
+    if (enviarAnio) cuerpo.anio_estreno = anio;
 
     setGuardando(true);
     try {
-      // En creación el serial va en el cuerpo; en edición va en la URL y no se puede modificar.
       const respuesta = esEdicion
         ? await mediaService.actualizar(id, cuerpo)
-        : await mediaService.crear({ serial: datos.serial.trim(), ...cuerpo });
+        : await mediaService.crear({ serial: datos.serial, ...cuerpo });
       await alertaExito(respuesta.message);
       history.push('/');
     } catch (error) {
@@ -164,7 +177,11 @@ export default function MediaFormulario() {
                     id="serial" name="serial" className="form-control" maxLength={50}
                     value={datos.serial} onChange={manejarCambio}
                     disabled={esEdicion} // la llave primaria no se puede cambiar
+                    aria-describedby={esEdicion ? undefined : 'ayuda-serial'}
                   />
+                  {!esEdicion && (
+                    <div id="ayuda-serial" className="form-text">Letras sin tilde, números, guiones (-) y guiones bajos (_).</div>
+                  )}
                 </div>
                 <div className="col-md-5">
                   <label htmlFor="titulo" className="form-label">
@@ -177,8 +194,14 @@ export default function MediaFormulario() {
                   <label htmlFor="anio_estreno" className="form-label">
                     Año de estreno <span className="text-danger">*</span>
                   </label>
-                  <input id="anio_estreno" name="anio_estreno" type="number" min="1901" max="2155"
-                    className="form-control" value={datos.anio_estreno} onChange={manejarCambio} />
+                  <input id="anio_estreno" name="anio_estreno" type="number" min={1900} max={anioActual}
+                    className="form-control" value={datos.anio_estreno} onChange={manejarCambio}
+                    aria-describedby={anioAnteriorInvalido ? 'ayuda-anio' : undefined} />
+                  {anioAnteriorInvalido && (
+                    <div id="ayuda-anio" className="form-text">
+                      El año registrado está fuera del rango. Puedes corregirlo o guardar los demás cambios.
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-12">
@@ -194,7 +217,8 @@ export default function MediaFormulario() {
                     URL de la producción <span className="text-danger">*</span>
                   </label>
                   <input id="url" name="url" type="url" className="form-control" maxLength={2048}
-                    placeholder="https://..." value={datos.url} onChange={manejarCambio} />
+                    placeholder="https://..." value={datos.url} onChange={manejarCambio} aria-describedby="ayuda-url" />
+                  <div id="ayuda-url" className="form-text">Pega el enlace de reproducción. La ruta del catálogo se genera desde el serial.</div>
                 </div>
                 <div className="col-md-6">
                   <label htmlFor="portada" className="form-label">URL de la portada</label>

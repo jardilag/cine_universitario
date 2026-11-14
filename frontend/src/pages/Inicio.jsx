@@ -79,7 +79,8 @@ export default function Inicio() {
     () =>
       items.filter(
         (i) =>
-          (esAdmin || i.estado === 'Activo') && // los visitantes solo ven las activas
+          // Los registros de la API anterior se consideran activos, igual que en la migración.
+          (esAdmin || (i.estado ?? 'Activo') === 'Activo') &&
           i.titulo.toLowerCase().includes(busqueda.toLowerCase()) &&
           (filtroTipo === '' || String(i.id_tipo) === filtroTipo) &&
           (filtroGenero === '' || String(i.id_genero) === filtroGenero)
@@ -182,13 +183,13 @@ export default function Inicio() {
                   </ul>
                 </div>
                 <div className="card-footer d-flex gap-2">
-                  <a className="btn btn-sm btn-success" href={item.url} target="_blank" rel="noreferrer">
+                  <a className="btn btn-sm btn-success" href={`/media?${encodeURIComponent(item.serial)}`}>
                     Ver
                   </a>
                   {/* Editar e Inactivar solo aparecen en modo administrador */}
                   {esAdmin && (
                     <>
-                      <Link className="btn btn-sm btn-outline-primary" to={`/media/editar/${item.serial}`}>
+                      <Link className="btn btn-sm btn-outline-primary" to={`/media/editar?${new URLSearchParams({ serial: item.serial })}`}>
                         Editar
                       </Link>
                       {item.estado === 'Activo' && (

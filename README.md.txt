@@ -1,1 +1,0 @@
-**En creacionBD esta el Script para crear la base de datos en MYSQL

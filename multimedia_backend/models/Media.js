@@ -21,7 +21,7 @@ class Media {
 
   // Actualizar un registro.
   static actualizar(id, titulo, sinopsis, url, portada, estado, anio_estreno, id_genero, id_director, id_productora, id_tipo, callback) {
-    const sql = 'UPDATE media SET titulo = ?, sinopsis = ?, url = ?, portada = ?, estado = ?, anio_estreno = ?, id_genero = ?, id_director = ?, id_productora = ?, id_tipo = ? WHERE serial = ?';
+    const sql = 'UPDATE media SET titulo = ?, sinopsis = ?, url = ?, portada = ?, estado = ?, anio_estreno = COALESCE(?, anio_estreno), id_genero = ?, id_director = ?, id_productora = ?, id_tipo = ? WHERE serial = ?';
     conexion.query(sql, [titulo, sinopsis, url, portada, estado, anio_estreno, id_genero, id_director, id_productora, id_tipo, id], callback);
   }
 

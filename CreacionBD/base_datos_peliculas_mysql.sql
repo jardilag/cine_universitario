@@ -59,7 +59,7 @@ CREATE TABLE media (
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
-    anio_estreno YEAR NOT NULL,
+    anio_estreno SMALLINT UNSIGNED NOT NULL,
     id_genero INT UNSIGNED NOT NULL,
     id_director INT UNSIGNED NOT NULL,
     id_productora INT UNSIGNED NOT NULL,
