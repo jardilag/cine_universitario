@@ -9,6 +9,18 @@ CREATE DATABASE IF NOT EXISTS cine_universitario
 
 USE cine_universitario;
 
+CREATE TABLE usuario (
+    id_usuario INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre_usuario VARCHAR(80) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('ADMIN', 'USUARIO') NOT NULL DEFAULT 'USUARIO',
+    estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_usuario_nombre (nombre_usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE genero (
     id_genero INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
@@ -53,7 +65,7 @@ CREATE TABLE media (
     serial VARCHAR(50) PRIMARY KEY,
     titulo VARCHAR(200) NOT NULL,
     sinopsis TEXT NOT NULL,
-    url VARCHAR(2048) NOT NULL UNIQUE,
+    url VARCHAR(768) NOT NULL UNIQUE,
     portada VARCHAR(2048) NULL,
     estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -92,6 +104,7 @@ INSERT INTO tipo (nombre, descripcion) VALUES
 
 -- Consulta para revisar la estructura de las tablas:
 SHOW TABLES;
+DESCRIBE usuario;
 DESCRIBE genero;
 DESCRIBE director;
 DESCRIBE productora;

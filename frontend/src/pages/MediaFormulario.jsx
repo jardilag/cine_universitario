@@ -216,7 +216,7 @@ export default function MediaFormulario({ esEdicion = false }) {
                   <label htmlFor="url" className="form-label">
                     URL de la producción <span className="text-danger">*</span>
                   </label>
-                  <input id="url" name="url" type="url" className="form-control" maxLength={2048}
+                  <input id="url" name="url" type="url" className="form-control" maxLength={768}
                     placeholder="https://..." value={datos.url} onChange={manejarCambio} aria-describedby="ayuda-url" />
                   <div id="ayuda-url" className="form-text">Pega el enlace de reproducción. La ruta del catálogo se genera desde el serial.</div>
                 </div>

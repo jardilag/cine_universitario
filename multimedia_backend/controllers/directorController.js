@@ -31,7 +31,10 @@ class DirectorController {
   getAllDirectors(req, res) {
     Director.obtenerTodos((error, results) => {
       if (error) return manejarError(res, error);
-      return res.status(200).json({ message: 'Lista de directores', data: results });
+      const data = req.usuario?.rol === 'ADMIN'
+        ? results
+        : results.map(({ id_director, nombres }) => ({ id_director, nombres }));
+      return res.status(200).json({ message: 'Lista de directores', data });
     });
   }
 

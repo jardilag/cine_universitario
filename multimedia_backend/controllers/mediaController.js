@@ -22,8 +22,8 @@ function validarDatos(datos, actualizar = false) {
   if ((!actualizar || datos.sinopsis !== undefined) && (typeof datos.sinopsis !== 'string' || !datos.sinopsis.trim())) {
     return 'sinopsis es obligatorio';
   }
-  if ((!actualizar || datos.url !== undefined) && (typeof datos.url !== 'string' || !datos.url.trim() || datos.url.trim().length > 2048)) {
-    return 'url es obligatorio y admite hasta 2048 caracteres';
+  if ((!actualizar || datos.url !== undefined) && (typeof datos.url !== 'string' || !datos.url.trim() || datos.url.trim().length > 768)) {
+    return 'url es obligatorio y admite hasta 768 caracteres';
   }
   if (datos.portada != null && (typeof datos.portada !== 'string' || datos.portada.length > 2048)) {
     return 'portada debe ser texto de hasta 2048 caracteres';
@@ -60,7 +60,8 @@ class MediaController {
   getAllMedia(req, res) {
     Media.obtenerTodos((error, results) => {
       if (error) return manejarError(res, error);
-      return res.status(200).json({ message: 'Lista de multimedia', data: results });
+      const data = req.usuario?.rol === 'ADMIN' ? results : results.filter(({ estado }) => estado === 'Activo');
+      return res.status(200).json({ message: 'Lista de multimedia', data });
     });
   }
 
@@ -69,8 +70,11 @@ class MediaController {
     if (!idValido(id)) return res.status(400).json({ message: 'Serial inválido' });
     Media.obtenerPorId(id, (error, results) => {
       if (error) return manejarError(res, error);
-      if (results.length === 0) return res.status(404).json({ message: 'No existe el registro de multimedia' });
-      return res.status(200).json({ message: 'Registro de multimedia', data: results[0] });
+      const [media] = results;
+      if (!media || (media.estado !== 'Activo' && req.usuario?.rol !== 'ADMIN')) {
+        return res.status(404).json({ message: 'No existe el registro de multimedia' });
+      }
+      return res.status(200).json({ message: 'Registro de multimedia', data: media });
     });
   }
 

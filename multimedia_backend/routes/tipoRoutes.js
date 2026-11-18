@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-//controlador
+const { exigirAdmin } = require('../middleware/autorizacion');
 const tipoController = require('../controllers/tipoController');
 
 router.get('/', tipoController.getAllTipos);
@@ -9,8 +9,8 @@ router.get('/', tipoController.getAllTipos);
 router.post('/', tipoController.insertTipo);
 
 router.route('/:id')
-  .get(tipoController.getTipoById)
+  .get(exigirAdmin, tipoController.getTipoById)
   .put(tipoController.updateTipo)
   .delete(tipoController.deleteTipo);
 
-module.exports = router;    
+module.exports = router;

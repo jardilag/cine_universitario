@@ -34,7 +34,10 @@ class TipoController {
   getAllTipos(req, res) {
     Tipo.obtenerTodos((error, results) => {
       if (error) return manejarError(res, error);
-      return res.status(200).json({ message: 'Lista de tipos', data: results });
+      const data = req.usuario?.rol === 'ADMIN'
+        ? results
+        : results.map(({ id_tipo, nombre }) => ({ id_tipo, nombre }));
+      return res.status(200).json({ message: 'Lista de tipos', data });
     });
   }
 

@@ -1,19 +1,36 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2')
+const { readFileSync } = require('node:fs')
 
-// Configuración de la conexión a la base de datos
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'cine_universitario'
-});
+const enRender = process.env.RENDER === 'true'
+const prefijo = enRender ? 'TIDB' : 'DB'
 
-connection.connect((err) => {
-  if (err) {
-    console.error('Error al conectar a la base de datos:', err);
-    return;
+function leer(campo, permiteVacio = false) {
+  const nombre = `${prefijo}_${campo}`
+  const valor = process.env[nombre]
+  if (valor === undefined || (!permiteVacio && !valor.trim())) {
+    throw new Error(`Falta configurar ${nombre}`)
   }
-    console.log('Conexión a la base de datos establecida');
-});
+  return valor
+}
 
-module.exports = connection;
+const port = Number(leer('PORT'))
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  throw new Error(`${prefijo}_PORT debe ser un puerto válido`)
+}
+
+const rutaCA = process.env.TIDB_CA_PATH
+
+module.exports = mysql.createPool({
+  host: leer('HOST'),
+  port,
+  user: leer('USER'),
+  password: leer('PASSWORD', !enRender),
+  database: leer('DATABASE'),
+  connectionLimit: 5,
+  ssl: enRender ? {
+    minVersion: 'TLSv1.2',
+    rejectUnauthorized: true,
+    verifyIdentity: true,
+    ca: rutaCA ? readFileSync(rutaCA) : undefined
+  } : undefined
+})

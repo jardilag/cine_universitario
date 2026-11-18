@@ -37,7 +37,10 @@ class ProductoraController {
   getAllProductoras(req, res) {
     Productora.obtenerTodos((error, results) => {
       if (error) return manejarError(res, error);
-      return res.status(200).json({ message: 'Lista de productoras', data: results });
+      const data = req.usuario?.rol === 'ADMIN'
+        ? results
+        : results.map(({ id_productora, nombre }) => ({ id_productora, nombre }));
+      return res.status(200).json({ message: 'Lista de productoras', data });
     });
   }
 

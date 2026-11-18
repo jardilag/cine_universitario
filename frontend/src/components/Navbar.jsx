@@ -6,7 +6,7 @@ import { useAdmin } from '../context/AdminContext';
 // Barra de navegación superior. NavLink funciona como <a> pero sin recargar la página
 // y añade la clase "active" al enlace de la ruta actual.
 export default function Navbar() {
-  const { esAdmin, activarAdmin, desactivarAdmin } = useAdmin();
+  const { usuario, esAdmin, iniciarSesion, cerrarSesion } = useAdmin();
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -47,13 +47,13 @@ export default function Navbar() {
               ))}
 
             <li className="nav-item ms-lg-3">
-              {esAdmin ? (
-                <button className="btn btn-sm btn-warning" onClick={desactivarAdmin}>
-                  Salir del modo admin
+              {usuario ? (
+                <button className="btn btn-sm btn-warning" onClick={cerrarSesion}>
+                  Cerrar sesión
                 </button>
               ) : (
-                <button className="btn btn-sm btn-outline-light" onClick={activarAdmin}>
-                  🔒 Modo administrador
+                <button className="btn btn-sm btn-outline-light" onClick={iniciarSesion}>
+                  Iniciar sesión
                 </button>
               )}
             </li>

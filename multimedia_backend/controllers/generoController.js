@@ -34,7 +34,10 @@ class GeneroController {
   getAllGeneros(req, res) {
     Genero.obtenerTodos((error, results) => {
       if (error) return manejarError(res, error);
-      return res.status(200).json({ message: 'Lista de géneros', data: results });
+      const data = req.usuario?.rol === 'ADMIN'
+        ? results
+        : results.map(({ id_genero, nombre }) => ({ id_genero, nombre }));
+      return res.status(200).json({ message: 'Lista de géneros', data });
     });
   }
 

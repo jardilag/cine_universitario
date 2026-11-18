@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BadgeEstado from '../components/BadgeEstado';
 import Cargando from '../components/Cargando';
@@ -27,11 +27,12 @@ export default function Inicio() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroGenero, setFiltroGenero] = useState('');
+  const cargaActual = useRef(0);
 
-  async function cargar() {
+  const cargar = useCallback(async () => {
+    const solicitud = ++cargaActual.current;
     setCargando(true);
     try {
-      // Promise.all lanza las 5 peticiones al mismo tiempo y espera a que todas terminen.
       const [media, generos, directores, productoras, tipos] = await Promise.all([
         mediaService.listar(),
         generoService.listar(),
@@ -39,6 +40,7 @@ export default function Inicio() {
         productoraService.listar(),
         tipoService.listar(),
       ]);
+      if (solicitud !== cargaActual.current) return;
       setItems(media);
       setCatalogos({
         generos: aMapa(generos, 'id_genero', 'nombre'),
@@ -47,15 +49,16 @@ export default function Inicio() {
         tipos: aMapa(tipos, 'id_tipo', 'nombre'),
       });
     } catch (error) {
-      alertaError(mensajeDeError(error));
+      if (solicitud === cargaActual.current) alertaError(mensajeDeError(error));
     } finally {
-      setCargando(false);
+      if (solicitud === cargaActual.current) setCargando(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     cargar();
-  }, []);
+    return () => { cargaActual.current++; };
+  }, [cargar, esAdmin]);
 
   // "Eliminar" en realidad INACTIVA: el backend cambia el estado a Inactivo y conserva el registro.
   async function manejarInactivar(item) {
